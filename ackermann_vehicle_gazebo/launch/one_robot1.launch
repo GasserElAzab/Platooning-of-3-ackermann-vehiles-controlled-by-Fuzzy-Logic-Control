@@ -1,0 +1,31 @@
+<launch>
+    <arg name="namespace"/>
+    <arg name="x"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="0.1"/>
+    <arg name="cmd_timeout" default="0.5"/>
+
+    <include file="$(find ackermann_vehicle_description)/launch/ackermann_vehicle.launch">
+      <arg name="namespace" value="$(arg namespace)"/>
+    </include>
+
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+     args="-x $(arg x) -y $(arg y) -z $(arg z) -urdf -param /robot_description -model $(arg namespace)"
+     respawn="false" output="screen" />
+
+
+
+    <!-- Load the joint controllers. One of these publishes the joint states
+         to joint_states. -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner"
+          args="$(find ackermann_vehicle_gazebo)/config/em_3905_joint_ctrlr_params.yaml"/>
+
+    <!-- Control the steering, axle, and shock absorber joints. -->
+    <node name="ackermann_controller" pkg="ackermann_vehicle_gazebo"
+          type="ackermann_controller">
+      <param name="cmd_timeout" value="$(arg cmd_timeout)"/>
+      <rosparam file="$(find ackermann_vehicle_gazebo)/config/em_3905_ackermann_ctrlr_params.yaml" command="load"/>
+    </node>
+    <!-- The odometry estimator, throttling, fake laser etc. go here -->
+    <!-- All the stuff as from usual robot launch file -->
+</launch>
